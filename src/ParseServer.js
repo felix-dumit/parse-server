@@ -181,9 +181,6 @@ class ParseServer {
     const pushControllerAdapter = loadAdapter(push && push.adapter, ParsePushAdapter, push || {});
 
     const loggerControllerAdapter = loadAdapter(loggerAdapter, WinstonLoggerAdapter, { jsonLogs, logsFolder, verbose, logLevel, silent });
-
-    logging.setLogger(loggerControllerAdapter);
-
     const emailControllerAdapter = loadAdapter(emailAdapter);
     const cacheControllerAdapter = loadAdapter(cacheAdapter, InMemoryCacheAdapter, {appId: appId});
     const analyticsControllerAdapter = loadAdapter(analyticsAdapter, AnalyticsAdapter);
@@ -200,6 +197,8 @@ class ParseServer {
     const hooksController = new HooksController(appId, databaseController, webhookKey);
     const analyticsController = new AnalyticsController(analyticsControllerAdapter);
 
+    logging.setLogger(loggerController);
+
     // TODO: create indexes on first creation of a _User object. Otherwise it's impossible to
     // have a Parse app without it having a _User collection.
     let userClassPromise = databaseController.loadSchema()
@@ -208,14 +207,14 @@ class ParseServer {
     let usernameUniqueness = userClassPromise
     .then(() => databaseController.adapter.ensureUniqueness('_User', requiredUserFields, ['username']))
     .catch(error => {
-      loggerControllerAdapter.warn('Unable to ensure uniqueness for usernames: ', error);
+      loggerController.warn('Unable to ensure uniqueness for usernames: ', error);
       return Promise.reject(error);
     });
 
     let emailUniqueness = userClassPromise
     .then(() => databaseController.adapter.ensureUniqueness('_User', requiredUserFields, ['email']))
     .catch(error => {
-      loggerControllerAdapter.warn('Unable to ensure uniqueness for user email addresses: ', error);
+      loggerController.warn('Unable to ensure uniqueness for user email addresses: ', error);
       return Promise.reject(error);
     })
 
